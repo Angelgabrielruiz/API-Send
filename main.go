@@ -1,36 +1,46 @@
 package main
 
 import (
-    "log"
-    "github.com/joho/godotenv"
-    "github.com/gin-gonic/gin"
-    "github.com/gin-contrib/cors"
-    "time"
+	"log"
+	"time"
+	"github.com/joho/godotenv"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 	pagosInfra "Send/src/Pagos/infraestructure"
+	"Send/src/Pagos/infraestructure/adapters"
 )
 
 func main() {
-    err := godotenv.Load()
-    if err != nil {
-        log.Fatalf("Error al cargar el archivo .env: %v", err)
-    }
+	// Cargar archivo .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error al cargar el archivo .env: %v", err)
+	}
 
-    r := gin.Default()
+	// Conectar a RabbitMQ
+	rabbitConn, err := adapters.NewRabbitMQConnection()
+	if err != nil {
+		log.Fatalf("Error al conectar con RabbitMQ: %v", err)
+	}
 
+	// Configurar el servidor Gin
+	r := gin.Default()
 
-    r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:5173"}, 
-        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-        ExposeHeaders:    []string{"Content-Length"},
-        AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
-    }))
+	// Configurar CORS
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, 
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
-    pagosInfra.SetupRoutesPago(r)
-    
+	// Configurar las rutas
+	pagosInfra.SetupRoutesPago(r, rabbitConn)
 
-    if err := r.Run(":8080"); err != nil {
-        log.Fatalf("Error al iniciar el servidor: %v", err)
-    } 
+	// Iniciar el servidor en el puerto 8080
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Error al iniciar el servidor: %v", err)
+	} 
 }

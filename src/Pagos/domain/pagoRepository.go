@@ -1,3 +1,5 @@
+//File: domain/pagoRepository.go
+
 package domain
 
 type PagoRepository interface {
