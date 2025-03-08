@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"database/sql"
-
 	"github.com/joho/godotenv"
 	_ "github.com/go-sql-driver/mysql"
 )
