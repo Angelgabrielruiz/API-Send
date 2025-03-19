@@ -3,20 +3,20 @@ package infraestructure
 import (
 	"Send/src/Pagos/application"
 	"Send/src/Pagos/infraestructure/adapters"
+
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"
-	
 )
 
 func SetupRoutesPago(r *gin.Engine, rabbitConn *amqp.Connection) {
-
-	rabbitRepo := application.NewRabbitRepository(rabbitConn)
+	
+	rabbitBroker := adapters.NewRabbitMQBroker(rabbitConn)
 
 	
 	ps := adapters.NewMySQLPago()
 
 	
-	createPagoController := NewCreatePagoController(*application.NewCreatePago(ps, rabbitRepo))
+	createPagoController := NewCreatePagoController(*application.NewCreatePago(ps, rabbitBroker))
 	getPagoController := NewGetPagoController(*application.NewGetPago(ps))
 	updatePagoController := NewUpdatePagoController(*application.NewUpdatePago(ps))
 	deletePagoController := NewDeletePagoController(*application.NewDeletePago(ps))
