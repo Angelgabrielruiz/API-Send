@@ -1,39 +1,40 @@
 package infraestructure
 
 import (
-	
-	"Send/src/Pagos/application"
-	"net/http"
+    "net/http"
 
-	"github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
+    "Send/src/Pagos/application"
 )
 
 type CreatePagoController struct {
-	useCase application.CreatePago
+    createPagoUseCase application.CreatePago
 }
 
 func NewCreatePagoController(useCase application.CreatePago) *CreatePagoController {
-	return &CreatePagoController{useCase: useCase}
+    return &CreatePagoController{
+        createPagoUseCase: useCase,
+    }
 }
 
-func (cp_c *CreatePagoController) Execute(c *gin.Context) {
+func (c *CreatePagoController) Execute(ctx *gin.Context) {
+    var req struct {
+        Monto  int32  `json:"monto"`
+        Pago   int32  `json:"pago"`
+        Cambio int32  `json:"cambio"`
+        Fecha  string `json:"fecha"`
+    }
 
-	var requestBody struct {
-		Monto  int32  `json:"monto"`
-		Pago   int32  `json:"pago"`
-		Cambio int32  `json:"cambio"`
-		Fecha  string `json:"fecha"`
-	}
+    if err := ctx.BindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
-		return
-	}
+    err := c.createPagoUseCase.Execute(req.Monto, req.Pago, req.Cambio, req.Fecha)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
 
-	if err := cp_c.useCase.Execute(requestBody.Monto, requestBody.Pago, requestBody.Cambio, requestBody.Fecha); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear el pago"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Pago creado exitosamente"})
+    ctx.JSON(http.StatusOK, gin.H{"message": "Pago creado exitosamente"})
 }
